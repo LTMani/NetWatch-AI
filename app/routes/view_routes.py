@@ -16,8 +16,25 @@ def index():
 def landing_view():
     return render_template('landing.html', title='NetWatch AI -- Enterprise Intelligence')
 
-@views_bp.route('/login')
+@views_bp.route('/login', methods=['GET', 'POST'])
 def login_view():
+    if request.method == 'POST':
+        identifier = request.form.get('identifier', '').strip()
+        password = request.form.get('password', '')
+        remember = bool(request.form.get('remember_me'))
+        try:
+            from app.services.auth_service import AuthService
+            auth_service = AuthService()
+            result = auth_service.authenticate(identifier, password, ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent'))
+            session['user_id'] = result['user']['id']
+            session['username'] = result['user']['username']
+            session['role'] = result['user']['primary_role']
+            if remember:
+                session.permanent = True
+            return redirect(url_for('views.dashboard_view'))
+        except Exception as e:
+            return render_template('auth/login.html', title='Sign In -- NetWatch AI', error=str(e))
+
     user = get_current_user()
     if user:
         return redirect(url_for('views.dashboard_view'))

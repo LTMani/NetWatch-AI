@@ -8,7 +8,7 @@ export class HttpClient {
         
         const token = localStorage.getItem('nw_token');
         if (token) {
-            headers['Authorization'] = Bearer ;
+            headers['Authorization'] = `Bearer ${token}`;
         }
 
         try {
@@ -18,14 +18,14 @@ export class HttpClient {
             });
 
             if (response.status === 401 && !url.includes('/api/v1/auth/login')) {
-                // Clear session and redirect to login if session expired
+                localStorage.removeItem('nw_token');
                 window.location.href = '/login';
                 return null;
             }
 
             const data = await response.json().catch(() => ({}));
             if (!response.ok) {
-                const errorMsg = data.message || Request failed with status ;
+                const errorMsg = data.message || `Request failed with status ${response.status}`;
                 throw new Error(errorMsg);
             }
             return data;
@@ -37,7 +37,7 @@ export class HttpClient {
 
     static get(url, params = {}) {
         const queryString = new URLSearchParams(params).toString();
-        const fullUrl = queryString ? ${url}? : url;
+        const fullUrl = queryString ? `${url}?${queryString}` : url;
         return this.request(fullUrl, { method: 'GET' });
     }
 

@@ -14,7 +14,7 @@ export class Toast {
     static show(message, type = 'info', durationMs = 4000) {
         const container = this.getContainer();
         const toast = document.createElement('div');
-        toast.className = 	oast toast-;
+        toast.className = `toast toast-${type}`;
         
         const icons = {
             success: '✓',
@@ -23,10 +23,10 @@ export class Toast {
             info: 'ℹ'
         };
 
-        toast.innerHTML = 
-            <span style="font-weight:bold; font-size:1.1rem;"></span>
-            <span style="flex:1;"></span>
-        ;
+        toast.innerHTML = `
+            <span style="font-weight:bold; font-size:1.1rem;">${icons[type] || '•'}</span>
+            <span style="flex:1;">${message}</span>
+        `;
         container.appendChild(toast);
 
         setTimeout(() => {
