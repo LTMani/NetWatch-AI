@@ -49,6 +49,12 @@ def get_device(device_id):
         raise NotFoundError('Device not found.')
     return jsonify({'status': 'success', 'data': device.to_dict()}), 200
 
+@devices_api_bp.route('/ip/<path:ip_address>', methods=['GET'])
+@login_required
+def analyze_ip_endpoint(ip_address):
+    analysis = device_service.analyze_ip_address(ip_address)
+    return jsonify({'status': 'success', 'data': analysis}), 200
+
 @devices_api_bp.route('', methods=['POST'])
 @login_required
 @roles_required('super_admin', 'network_admin')
