@@ -67,6 +67,7 @@ def create_app(config_name: str = 'development') -> Flask:
     from app.routes.reports_api import reports_api_bp
     from app.routes.settings_api import settings_api_bp
     from app.routes.investigation_api import investigation_api_bp
+    from app.routes.data_sources_api import data_sources_api_bp
 
     app.register_blueprint(views_bp)
     app.register_blueprint(auth_api_bp)
@@ -92,5 +93,6 @@ def create_app(config_name: str = 'development') -> Flask:
     app.register_blueprint(reports_api_bp)
     app.register_blueprint(settings_api_bp)
     app.register_blueprint(investigation_api_bp)
+    app.register_blueprint(data_sources_api_bp)
 
     return app

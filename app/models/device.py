@@ -42,12 +42,17 @@ class Device(BaseModel):
     last_seen_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
     is_authorized = Column(Boolean, default=True, nullable=False, index=True)
     is_quarantined = Column(Boolean, default=False, nullable=False)
+
+    discovery_source = Column(String(64), default='DISCOVERED_DHCP', nullable=False, index=True) # DISCOVERED_ROUTER, DISCOVERED_DHCP, DISCOVERED_SNMP, MANUAL
+    data_source_id = Column(String(36), ForeignKey('nw_data_sources.id'), nullable=True, index=True)
+    data_freshness = Column(String(32), default='LIVE', nullable=False) # LIVE, RECENT, HISTORICAL, SIMULATED
     
     # Relationships
     organization = relationship('Organization', back_populates='devices')
     department = relationship('Department', back_populates='devices')
     site = relationship('NetworkSite', back_populates='devices')
     subnet = relationship('Subnet', back_populates='devices')
+    data_source = relationship('NetworkDataSource', back_populates='devices')
     interfaces = relationship('DeviceInterface', back_populates='device', cascade='all, delete-orphan')
     history = relationship('DeviceHistory', back_populates='device', cascade='all, delete-orphan')
     tags = relationship('DeviceTag', secondary=device_tags, back_populates='devices', lazy='joined')
@@ -60,6 +65,9 @@ class Device(BaseModel):
         data['department_name'] = self.department.name if self.department else None
         data['subnet_cidr'] = self.subnet.cidr if self.subnet else None
         data['site_name'] = self.site.name if self.site else None
+        data['discovery_source'] = self.discovery_source or 'DISCOVERED_DHCP'
+        data['data_freshness'] = self.data_freshness or 'LIVE'
+        data['data_source_name'] = self.data_source.name if self.data_source else None
         return data
 
 class DeviceInterface(BaseModel):

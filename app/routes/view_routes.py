@@ -209,6 +209,14 @@ def users_view():
         return redirect(url_for('views.login_view'))
     return render_template('users/index.html', title='User & Access Management -- NetWatch AI', active_page='users')
 
+@views_bp.route('/settings/data-sources')
+@views_bp.route('/data-sources')
+def data_sources_view():
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('views.login_view'))
+    return render_template('data_sources/index.html', title='Authorized Network Data Sources -- NetWatch AI', active_page='settings')
+
 @views_bp.route('/settings')
 def settings_view():
     user = get_current_user()

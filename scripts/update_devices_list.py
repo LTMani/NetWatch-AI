@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿html_content = """{% extends "base.html" %}
 
 {% block content %}
 <div class="page-header">
@@ -284,3 +284,9 @@
     loadDevices();
 </script>
 {% endblock %}
+"""
+
+with open("app/templates/devices/list.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("[+] Updated app/templates/devices/list.html with Discover Devices, Add Data Source, and Register Manually!")

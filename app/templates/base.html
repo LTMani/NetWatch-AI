@@ -76,12 +76,16 @@
                 <a href="/audit-logs" class="nav-item {% if active_page == 'audit' %}active{% endif %}">
                     <span class="icon">🔒</span><span>Audit Logs</span>
                 </a>
+                <a href="/settings/data-sources" class="nav-item {% if active_page == 'data_sources' %}active{% endif %}">
+                    <span class="icon">🔌</span><span>Data Sources</span>
+                    <span class="nav-badge nav-badge-green">Sync</span>
+                </a>
                 <a href="/settings" class="nav-item {% if active_page == 'settings' %}active{% endif %}">
                     <span class="icon">⚙</span><span>Settings</span>
                 </a>
 
                 <div class="sidebar-section-title">Quick Actions</div>
-                <a href="/devices" class="quick-action-btn"><span>➕</span> Add Device</a>
+                <a href="/devices" class="quick-action-btn"><span>⚡</span> Discover Devices</a>
                 <a href="/policies" class="quick-action-btn"><span>📄</span> Create Policy</a>
                 <a href="/diagnostics/slow-network" class="quick-action-btn"><span>⚡</span> Run Diagnostic</a>
                 <a href="/reports" class="quick-action-btn"><span>📊</span> Generate Report</a>

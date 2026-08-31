@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Authorized Network Data Sources</h1>
+        <div class="page-subtitle">Pluggable connectors for Router Controllers, DHCP lease servers, SNMP pollers, and company DNS logs</div>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+        <button id="btn-discover-all-sources" class="btn btn-primary btn-sm">⚡ Discover Devices (All Sources)</button>
+        <button id="btn-open-add-source" class="btn btn-secondary btn-sm">+ Add Data Source</button>
+    </div>
+</div>
+
+<!-- Configured Data Sources Table -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="margin-bottom:1rem;">
+        <div class="card-title" style="font-size:1rem; font-weight:700; color:#fff;">Active Network Integrations</div>
+    </div>
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Source Name</th>
+                    <th>Type & Provider</th>
+                    <th>Endpoint / Host</th>
+                    <th>Auth Method</th>
+                    <th>Last Sync</th>
+                    <th>Sync Health</th>
+                    <th>Nodes Found</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-sources">
+                <tr><td colspan="8" style="text-align:center; padding:2rem;">Loading network data sources...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Add Data Source -->
+<div id="modal-add-source" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 style="font-size:1.1rem; font-weight:700; color:#fff;">Add Network Data Source</h3>
+            <button data-modal-close="modal-add-source" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button>
+        </div>
+        <form id="form-add-source">
+            <div class="modal-body">
+                <div style="margin-bottom:1rem;">
+                    <label class="form-label" style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.3rem;">Integration Name</label>
+                    <input type="text" id="src-name" class="form-input" required placeholder="HQ Ubiquiti UniFi Controller" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff; font-size:0.8rem;">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.3rem;">Connector Type</label>
+                        <select id="src-type" class="form-input" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff; font-size:0.8rem;">
+                            <option value="ROUTER_CONTROLLER">Router / Controller API</option>
+                            <option value="DHCP_LEASES">DHCP Lease Log Ingestion</option>
+                            <option value="SNMP_COLLECTOR">SNMP MIB-II Poller</option>
+                            <option value="FIREWALL_TELEMETRY">Firewall NetFlow Exporter</option>
+                            <option value="DNS_TELEMETRY">Company DNS Resolver Log</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.3rem;">Provider Profile</label>
+                        <select id="src-provider" class="form-input" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff; font-size:0.8rem;">
+                            <option value="ubiquiti_unifi">Ubiquiti UniFi Controller</option>
+                            <option value="cisco_meraki">Cisco Meraki Dashboard API</option>
+                            <option value="mikrotik_routeros">MikroTik RouterOS API</option>
+                            <option value="pfsense_api">pfSense / OPNsense REST API</option>
+                            <option value="isc_dhcp">ISC-DHCP / Windows DHCP</option>
+                            <option value="cisco_snmp">Cisco Catalyst SNMP v2c/v3</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:2fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.3rem;">Endpoint URL / Hostname</label>
+                        <input type="text" id="src-url" class="form-input" required placeholder="https://unifi.corp.internal:8443" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff; font-size:0.8rem;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.3rem;">Port</label>
+                        <input type="number" id="src-port" class="form-input" value="8443" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff; font-size:0.8rem;">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.3rem;">Authentication Type</label>
+                        <select id="src-auth" class="form-input" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff; font-size:0.8rem;">
+                            <option value="API_TOKEN">API Key / Bearer Token</option>
+                            <option value="BASIC_AUTH">Username & Password</option>
+                            <option value="SNMP_COMMUNITY">SNMP Community String</option>
+                            <option value="CERTIFICATE">mTLS Certificate</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.3rem;">Credential / Secret</label>
+                        <input type="password" id="src-secret" class="form-input" placeholder="••••••••••••••••" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff; font-size:0.8rem;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-modal-close="modal-add-source" class="btn btn-secondary btn-sm">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save & Authorize Connector</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Modal } from '/static/js/components/modal.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    Modal.init();
+
+    async function loadDataSources() {
+        try {
+            const res = await HttpClient.get('/api/v1/data-sources');
+            const items = res.data || [];
+            const tbody = document.getElementById('tbody-sources');
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2.5rem; color:var(--text-muted);">No network data sources configured. Click "+ Add Data Source" to connect your router, DHCP, or SNMP collector.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(s => {
+                const statusBadge = s.sync_status === 'SUCCESS' ? 'badge-online' : (s.sync_status === 'FAILED' ? 'badge-unauthorized' : 'badge-degraded');
+                return `
+                <tr>
+                    <td>
+                        <div style="font-weight:600; color:#fff;">${s.name}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${s.description || 'Enterprise Connector'}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:600; color:var(--accent-cyan);">${s.source_type}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); text-transform:capitalize;">${s.provider.replace('_', ' ')}</div>
+                    </td>
+                    <td>
+                        <div><code style="color:#38bdf8;">${s.endpoint_url}</code></div>
+                    </td>
+                    <td><span class="badge badge-online">${s.auth_type}</span></td>
+                    <td style="font-size:0.75rem; color:var(--text-muted);">
+                        ${s.last_sync_at ? new Date(s.last_sync_at).toLocaleTimeString() : 'Never'}
+                    </td>
+                    <td><span class="badge ${statusBadge}">${s.sync_status}</span></td>
+                    <td style="font-weight:700; color:#10b981;">${s.devices_discovered_count} nodes</td>
+                    <td>
+                        <div style="display:flex; gap:0.4rem;">
+                            <button class="btn btn-secondary btn-sm btn-test-source" data-id="${s.id}" style="padding:0.25rem 0.5rem;">Test</button>
+                            <button class="btn btn-primary btn-sm btn-sync-source" data-id="${s.id}" style="padding:0.25rem 0.5rem;">⚡ Sync</button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.btn-test-source').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    Toast.info('Testing connector connectivity...');
+                    try {
+                        const res = await HttpClient.post(`/api/v1/data-sources/${id}/test`);
+                        Toast.success(res.data.message || 'Connection verified successfully.');
+                    } catch (err) {
+                        Toast.error(err.message || 'Connection test failed.');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.btn-sync-source').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    Toast.info('Ingesting connected devices and telemetry...');
+                    try {
+                        const res = await HttpClient.post(`/api/v1/data-sources/${id}/sync`);
+                        Toast.success(res.data.message || 'Discovery sync completed.');
+                        loadDataSources();
+                    } catch (err) {
+                        Toast.error(err.message || 'Sync failed.');
+                    }
+                });
+            });
+
+        } catch (err) {
+            Toast.error('Failed to load data sources.');
+        }
+    }
+
+    document.getElementById('btn-open-add-source').addEventListener('click', () => Modal.open('modal-add-source'));
+
+    document.getElementById('btn-discover-all-sources').addEventListener('click', async () => {
+        Toast.info('Executing enterprise discovery across all active data sources...');
+        try {
+            const res = await HttpClient.post('/api/v1/data-sources/discover-all');
+            Toast.success(res.data.message || 'All sources polled.');
+            loadDataSources();
+        } catch (err) {
+            Toast.error(err.message || 'Discovery failed.');
+        }
+    });
+
+    document.getElementById('form-add-source').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            name: document.getElementById('src-name').value.trim(),
+            source_type: document.getElementById('src-type').value,
+            provider: document.getElementById('src-provider').value,
+            endpoint_url: document.getElementById('src-url').value.trim(),
+            port: parseInt(document.getElementById('src-port').value || 443),
+            auth_type: document.getElementById('src-auth').value,
+            secret: document.getElementById('src-secret').value.trim()
+        };
+
+        try {
+            await HttpClient.post('/api/v1/data-sources', payload);
+            Toast.success('Data source added.');
+            Modal.close('modal-add-source');
+            loadDataSources();
+        } catch (err) {
+            Toast.error(err.message || 'Failed to save data source.');
+        }
+    });
+
+    loadDataSources();
+</script>
+{% endblock %}
