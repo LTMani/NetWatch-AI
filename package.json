@@ -1,0 +1,15 @@
+﻿{
+  "name": "netwatch-ai",
+  "version": "1.0.0",
+  "description": "Enterprise Network Usage & Intelligence Platform",
+  "main": "run.py",
+  "scripts": {
+    "start": "python run.py",
+    "serve": "python app.py",
+    "main": "python main.py",
+    "test": "pytest",
+    "build": "python -m py_compile run.py app.py main.py",
+    "audit": "python scripts/verify_all_subsets.py"
+  },
+  "private": true
+}
