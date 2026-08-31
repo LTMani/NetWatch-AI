@@ -1,4 +1,4 @@
-[build-system]
+content = """[build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
@@ -20,3 +20,9 @@ dependencies = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+"""
+
+with open("pyproject.toml", "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("[+] pyproject.toml fixed without BOM!")

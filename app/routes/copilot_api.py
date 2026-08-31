@@ -8,6 +8,7 @@ copilot_engine = GroundedNetworkCopilotEngine()
 copilot_repo = CopilotRepository()
 
 @copilot_api_bp.route('/ask', methods=['POST'])
+@copilot_api_bp.route('/query', methods=['POST'])
 @login_required
 def ask_copilot():
     data = request.get_json() or {}
