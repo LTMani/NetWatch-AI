@@ -13,9 +13,9 @@
 
 <!-- Diagnostics Execution Results Card -->
 <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-header">
-        <div class="card-title">Probe Pipeline Stages</div>
-        <span id="badge-diag-status" class="badge badge-optimal">READY</span>
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <div class="card-title" style="font-size:1rem; font-weight:700; color:#fff;">Probe Pipeline Stages</div>
+        <span id="badge-diag-status" class="badge badge-online">READY</span>
     </div>
     
     <div id="diag-steps-container" style="display:flex; flex-direction:column; gap:0.75rem;">
@@ -27,15 +27,15 @@
 
 <!-- Root Cause Synthesis & Playbook -->
 <div id="diag-synthesis-card" class="card" style="display:none;">
-    <div class="card-header">
-        <div class="card-title">Root Cause Synthesis & Remediation Playbook</div>
+    <div class="card-header" style="margin-bottom:1rem;">
+        <div class="card-title" style="font-size:1rem; font-weight:700; color:#fff;">Root Cause Synthesis & Remediation Playbook</div>
     </div>
-    <div style="background:var(--bg-surface); padding:1rem; border-radius:var(--radius-md); margin-bottom:1rem;">
+    <div style="background:#090f1a; border:1px solid var(--border-subtle); padding:1rem; border-radius:var(--radius-md); margin-bottom:1rem;">
         <div style="font-weight:700; color:var(--accent-cyan); margin-bottom:0.25rem;">Identified Bottleneck:</div>
         <div id="txt-root-cause" style="color:var(--text-primary); font-size:0.9rem;">--</div>
     </div>
     <div>
-        <div style="font-weight:700; color:var(--status-optimal); margin-bottom:0.25rem;">Actionable Remediation Playbook:</div>
+        <div style="font-weight:700; color:#10b981; margin-bottom:0.25rem;">Actionable Remediation Playbook:</div>
         <div id="txt-playbook" style="color:var(--text-secondary); font-size:0.85rem; line-height:1.6; white-space:pre-line;">--</div>
     </div>
 </div>
@@ -51,7 +51,7 @@
         btn.disabled = true;
         btn.textContent = 'Running 7-Stage Probe...';
         document.getElementById('badge-diag-status').textContent = 'PROBING TELEMETRY';
-        document.getElementById('badge-diag-status').className = 'badge badge-medium';
+        document.getElementById('badge-diag-status').className = 'badge badge-degraded';
 
         try {
             const res = await HttpClient.post('/api/v1/diagnostics/run', { scope: 'Global Gateway' });
@@ -59,26 +59,30 @@
             const steps = data.steps;
 
             const container = document.getElementById('diag-steps-container');
-            container.innerHTML = steps.map(s => 
-                <div style="background:var(--bg-surface); padding:1rem; border-radius:var(--radius-md); border-left:4px solid ;">
+            container.innerHTML = steps.map(s => {
+                const borderClr = s.status === 'PASSED' ? '#10b981' : (s.status === 'WARNING' ? '#f59e0b' : '#ef4444');
+                const badgeClass = s.status === 'PASSED' ? 'badge-online' : (s.status === 'WARNING' ? 'badge-degraded' : 'badge-unauthorized');
+                return `
+                <div style="background:#090f1a; padding:1rem; border-radius:var(--radius-md); border-left:4px solid ${borderClr}; border:1px solid var(--border-subtle);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
                         <div style="font-weight:700; color:var(--text-primary); font-size:0.9rem;">
-                            Stage : 
+                            Stage ${s.step_number}: ${s.step_name}
                         </div>
-                        <span class="badge badge-"></span>
+                        <span class="badge ${badgeClass}">${s.status}</span>
                     </div>
-                    <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;"></div>
-                    <div style="font-size:0.75rem; color:var(--text-muted);">Observed: <code></code> (Threshold: )</div>
+                    <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">${s.finding_details}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">Observed: <code>${s.metric_value}</code> (Threshold: ${s.threshold_value})</div>
                 </div>
-            ).join('');
+                `;
+            }).join('');
 
             // Show synthesis
             document.getElementById('diag-synthesis-card').style.display = 'block';
-            document.getElementById('txt-root-cause').textContent = data.session.root_cause_summary;
-            document.getElementById('txt-playbook').textContent = data.session.remediation_playbook;
+            document.getElementById('txt-root-cause').textContent = data.session.root_cause_summary || 'All network parameters nominal.';
+            document.getElementById('txt-playbook').textContent = data.session.remediation_playbook || 'No action required.';
 
             document.getElementById('badge-diag-status').textContent = 'COMPLETED';
-            document.getElementById('badge-diag-status').className = 'badge badge-optimal';
+            document.getElementById('badge-diag-status').className = 'badge badge-online';
             Toast.success('Diagnostic probe completed successfully.');
         } catch (err) {
             Toast.error('Failed to run diagnostics.');

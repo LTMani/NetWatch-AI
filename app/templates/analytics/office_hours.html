@@ -10,21 +10,21 @@
 
 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
     <div class="card kpi-card">
-        <div class="kpi-label">Business Hours Volume (09:00 - 18:00)</div>
-        <div class="kpi-value" id="kpi-office-pct" style="color:var(--status-optimal);">--%</div>
-        <div class="kpi-subtext" id="kpi-office-gb">-- GB during working shift</div>
+        <div class="kpi-label" style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Business Hours Volume (09:00 - 18:00)</div>
+        <div class="kpi-value" id="kpi-office-pct" style="color:#10b981; font-size:1.6rem; font-weight:800; margin:0.4rem 0;">--%</div>
+        <div class="kpi-subtext" id="kpi-office-gb" style="font-size:0.75rem; color:var(--text-muted);">-- GB during working shift</div>
     </div>
 
     <div class="card kpi-card">
-        <div class="kpi-label">Off-Hours Traffic (Night / Weekend)</div>
-        <div class="kpi-value" id="kpi-off-pct" style="color:var(--accent-amber);">--%</div>
-        <div class="kpi-subtext" id="kpi-off-gb">-- GB quiet hours volume</div>
+        <div class="kpi-label" style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Off-Hours Traffic (Night / Weekend)</div>
+        <div class="kpi-value" id="kpi-off-pct" style="color:#f59e0b; font-size:1.6rem; font-weight:800; margin:0.4rem 0;">--%</div>
+        <div class="kpi-subtext" id="kpi-off-gb" style="font-size:0.75rem; color:var(--text-muted);">-- GB quiet hours volume</div>
     </div>
 </div>
 
 <div class="card">
-    <div class="card-header">
-        <div class="card-title">Top Active Devices During Off-Hours</div>
+    <div class="card-header" style="margin-bottom:1rem;">
+        <div class="card-title" style="font-size:1rem; font-weight:700; color:#fff;">Top Active Devices During Off-Hours</div>
     </div>
     <div class="data-table-container">
         <table class="data-table">
@@ -54,25 +54,25 @@
             const res = await HttpClient.get('/api/v1/analytics/office-hours');
             const d = res.data;
 
-            document.getElementById('kpi-office-pct').textContent = ${d.office_hours_percentage}%;
-            document.getElementById('kpi-office-gb').textContent = ${(d.office_hours_bytes / (1024*1024*1024)).toFixed(2)} GB working shift volume;
-            document.getElementById('kpi-off-pct').textContent = ${d.off_hours_percentage}%;
-            document.getElementById('kpi-off-gb').textContent = ${(d.off_hours_bytes / (1024*1024*1024)).toFixed(2)} GB off-hours volume;
+            document.getElementById('kpi-office-pct').textContent = `${d.office_hours_percentage}%`;
+            document.getElementById('kpi-office-gb').textContent = `${(d.office_hours_bytes / (1024*1024*1024)).toFixed(2)} GB working shift volume`;
+            document.getElementById('kpi-off-pct').textContent = `${d.off_hours_percentage}%`;
+            document.getElementById('kpi-off-gb').textContent = `${(d.off_hours_bytes / (1024*1024*1024)).toFixed(2)} GB off-hours volume`;
 
             const tbody = document.getElementById('tbody-off-devices');
-            if (d.top_off_hours_devices.length === 0) {
+            if (!d.top_off_hours_devices || d.top_off_hours_devices.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--text-muted);">No off-hours activity recorded.</td></tr>';
             } else {
-                tbody.innerHTML = d.top_off_hours_devices.map(dev => 
+                tbody.innerHTML = d.top_off_hours_devices.map(dev => `
                     <tr>
-                        <td style="font-weight:600; color:var(--text-primary);"></td>
-                        <td><code></code></td>
-                        <td></td>
-                        <td style="font-weight:700; color:var(--accent-amber); font-family:var(--font-mono);">
-                             MB
+                        <td style="font-weight:600; color:var(--text-primary);">${dev.device_name || 'Device'}</td>
+                        <td><code>${dev.ip_address}</code></td>
+                        <td>${dev.assigned_user || 'Unassigned'}</td>
+                        <td style="font-weight:700; color:#f59e0b; font-family:monospace;">
+                            ${(dev.bytes / (1024*1024)).toFixed(1)} MB
                         </td>
                     </tr>
-                ).join('');
+                `).join('');
             }
         } catch (err) {
             Toast.error('Failed to load office hours analytics.');

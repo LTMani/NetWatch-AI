@@ -12,8 +12,8 @@
 </div>
 
 <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-header">
-        <div class="card-title">Enterprise Subnets & VLAN Allocation</div>
+    <div class="card-header" style="margin-bottom:1rem;">
+        <div class="card-title" style="font-size:1rem; font-weight:700; color:#fff;">Enterprise Subnets & VLAN Allocation</div>
     </div>
     <div class="data-table-container">
         <table class="data-table">
@@ -46,20 +46,24 @@
             const subnets = res.data.subnets;
             const tbody = document.getElementById('tbody-subnets');
             
-            tbody.innerHTML = subnets.map(s => 
-                <tr>
-                    <td style="font-weight:600; color:var(--text-primary);"></td>
-                    <td><code></code></td>
-                    <td><code></code></td>
-                    <td><span class="badge badge-low">VLAN </span></td>
-                    <td style="font-weight:700;"> endpoints</td>
-                    <td>
-                        <span class="badge badge-">
-                            
-                        </span>
-                    </td>
-                </tr>
-            ).join('');
+            if (!subnets || subnets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No subnets found.</td></tr>';
+            } else {
+                tbody.innerHTML = subnets.map(s => `
+                    <tr>
+                        <td style="font-weight:600; color:var(--text-primary);">${s.name}</td>
+                        <td><code>${s.cidr}</code></td>
+                        <td><code>${s.gateway_ip}</code></td>
+                        <td><span class="badge badge-online">VLAN ${s.vlan_id || '1'}</span></td>
+                        <td style="font-weight:700;">${s.device_count || 0} endpoints</td>
+                        <td>
+                            <span class="badge badge-online">
+                                ${s.zone || 'Internal LAN'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
         } catch (err) {
             Toast.error('Failed to load network subnets.');
         }
