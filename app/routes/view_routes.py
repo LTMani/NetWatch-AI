@@ -65,6 +65,15 @@ def devices_view():
         return redirect(url_for('views.login_view'))
     return render_template('devices/list.html', title='Device Inventory -- NetWatch AI', active_page='devices')
 
+@views_bp.route('/ip-lookup')
+@views_bp.route('/investigation/ip')
+def ip_lookup_view():
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('views.login_view'))
+    target_ip = request.args.get('ip', '').strip()
+    return render_template('investigation/ip_lookup.html', title='IP Investigation Center -- NetWatch AI', initial_ip=target_ip, active_page='ip_lookup')
+
 @views_bp.route('/devices/<device_id>')
 def device_detail_view(device_id):
     user = get_current_user()
