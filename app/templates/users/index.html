@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">User & Access Management</h1>
+        <div class="page-subtitle">Role-based access control (RBAC), security analysts, and administrator accounts</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>User Name</th>
+                    <th>Email Address</th>
+                    <th>Primary Role</th>
+                    <th>Status</th>
+                    <th>MFA</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-users">
+                <tr><td colspan="5" style="text-align:center; padding:2rem;">Loading enterprise directory...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    async function loadUsers() {
+        try {
+            const res = await HttpClient.get('/api/v1/users');
+            const items = res.data.items;
+            const tbody = document.getElementById('tbody-users');
+
+            tbody.innerHTML = items.map(u => `
+                <tr>
+                    <td style="font-weight:600; color:var(--text-primary);">${u.full_name} (${u.username})</td>
+                    <td><code>${u.email}</code></td>
+                    <td><span class="badge badge-low">${u.primary_role}</span></td>
+                    <td><span class="badge badge-${u.is_active ? 'optimal' : 'critical'}">${u.is_active ? 'ACTIVE' : 'LOCKED'}</span></td>
+                    <td><span class="badge badge-${u.mfa_enabled ? 'optimal' : 'medium'}">${u.mfa_enabled ? 'ENABLED' : 'DISABLED'}</span></td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            Toast.error('Failed to load users.');
+        }
+    }
+    loadUsers();
+</script>
+{% endblock %}

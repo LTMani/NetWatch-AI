@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Asset Risk Posture & Scoring</h1>
+        <div class="page-subtitle">Dynamic Bayesian half-life decay risk calculation and multi-factor penalty attribution</div>
+    </div>
+    <div>
+        <button id="btn-recalc-risk" class="btn btn-primary btn-sm">⟳ Recalculate Posture</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">Asset Risk Leaderboard</div>
+    </div>
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Device Name</th>
+                    <th>IP Address</th>
+                    <th>Assigned User</th>
+                    <th>Risk Score (0-100)</th>
+                    <th>Classification</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-risk">
+                <tr><td colspan="6" style="text-align:center; padding:2rem;">Loading asset risk evaluations...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    async function loadRisk() {
+        try {
+            const res = await HttpClient.get('/api/v1/risk/leaderboard');
+            const devs = res.data;
+            const tbody = document.getElementById('tbody-risk');
+
+            if (devs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">All assets operating within nominal safety margins.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = devs.map(d => `
+                <tr>
+                    <td style="font-weight:600; color:var(--text-primary);">${d.name}</td>
+                    <td><code>${d.ip_address}</code></td>
+                    <td>${d.assigned_user || 'Unassigned'}</td>
+                    <td style="font-weight:800; font-family:var(--font-mono); font-size:1.1rem; color:${d.risk_score >= 50 ? 'var(--status-critical)' : 'var(--status-optimal)'};">
+                        ${d.risk_score}
+                    </td>
+                    <td><span class="badge badge-${d.risk_level === 'critical' ? 'critical' : (d.risk_level === 'high' ? 'high' : 'medium')}">${d.risk_level}</span></td>
+                    <td><a href="/devices/${d.id}" class="btn btn-secondary btn-sm">Inspect Risk ➔</a></td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            Toast.error('Failed to load risk leaderboard.');
+        }
+    }
+
+    document.getElementById('btn-recalc-risk').addEventListener('click', async () => {
+        try {
+            const res = await HttpClient.post('/api/v1/risk/recalculate');
+            Toast.success(res.message);
+            loadRisk();
+        } catch (err) {
+            Toast.error('Recalculation failed.');
+        }
+    });
+
+    loadRisk();
+</script>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Incident Response Board</h1>
+        <div class="page-subtitle">Track, investigate, and resolve enterprise network outages and security breaches</div>
+    </div>
+    <div>
+        <button id="btn-create-inc" class="btn btn-primary btn-sm">+ Create Incident</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Incident #</th>
+                    <th>Title & Summary</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Lead Investigator</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-incidents">
+                <tr><td colspan="6" style="text-align:center; padding:2rem;">Loading incidents...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Incident Modal -->
+<div id="modal-create-inc" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 style="font-size:1.1rem; font-weight:700;">Open Network Incident</h3>
+            <button data-modal-close="modal-create-inc" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button>
+        </div>
+        <form id="form-create-inc">
+            <div class="modal-body">
+                <div style="margin-bottom:1rem;">
+                    <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.3rem;">Incident Title</label>
+                    <input type="text" id="inc-title" class="form-input" required placeholder="Core Switch Trunk Link Flap in Building B" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.3rem;">Severity</label>
+                        <select id="inc-sev" class="form-input" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+                            <option value="sev2_high">SEV-2 High</option>
+                            <option value="sev1_critical">SEV-1 Critical</option>
+                            <option value="sev3_medium">SEV-3 Medium</option>
+                            <option value="sev4_low">SEV-4 Low</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.3rem;">Category</label>
+                        <input type="text" id="inc-cat" class="form-input" value="Network Performance" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.3rem;">Incident Summary</label>
+                    <textarea id="inc-summary" class="form-input" rows="3" placeholder="Describe the symptom, affected subnets, and customer impact..." style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-modal-close="modal-create-inc" class="btn btn-secondary btn-sm">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">Open Incident</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Modal } from '/static/js/components/modal.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    async function loadIncidents() {
+        try {
+            const res = await HttpClient.get('/api/v1/incidents');
+            const items = res.data.items;
+            const tbody = document.getElementById('tbody-incidents');
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No open incidents. All services operational.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(inc => `
+                <tr>
+                    <td><code style="font-weight:700; color:var(--accent-cyan);">${inc.incident_number}</code></td>
+                    <td>
+                        <div style="font-weight:600; color:var(--text-primary);">${inc.title}</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary);">${inc.summary}</div>
+                    </td>
+                    <td><span class="badge badge-${inc.severity.includes('critical') ? 'critical' : 'high'}">${inc.severity.toUpperCase()}</span></td>
+                    <td><span class="badge badge-${inc.status === 'resolved' ? 'optimal' : 'medium'}">${inc.status.toUpperCase()}</span></td>
+                    <td>${inc.lead_investigator || 'admin'}</td>
+                    <td><a href="/incidents/${inc.id}" class="btn btn-secondary btn-sm">War Room ➔</a></td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            Toast.error('Failed to load incidents.');
+        }
+    }
+
+    document.getElementById('btn-create-inc').addEventListener('click', () => Modal.open('modal-create-inc'));
+
+    document.getElementById('form-create-inc').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            title: document.getElementById('inc-title').value.trim(),
+            severity: document.getElementById('inc-sev').value,
+            category: document.getElementById('inc-cat').value.trim(),
+            summary: document.getElementById('inc-summary').value.trim()
+        };
+
+        try {
+            await HttpClient.post('/api/v1/incidents', payload);
+            Toast.success('Incident opened successfully.');
+            Modal.close('modal-create-inc');
+            loadIncidents();
+        } catch (err) {
+            Toast.error(err.message || 'Creation failed.');
+        }
+    });
+
+    loadIncidents();
+</script>
+{% endblock %}

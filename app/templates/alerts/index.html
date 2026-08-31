@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Correlated Alerts Center</h1>
+        <div class="page-subtitle">Temporal and topological correlation groups reducing alert floods into actionable clusters</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Alert Title</th>
+                    <th>Category</th>
+                    <th>Severity</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-alerts">
+                <tr><td colspan="6" style="text-align:center; padding:2rem;">Loading alert telemetry...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    async function loadAlerts() {
+        try {
+            const res = await HttpClient.get('/api/v1/alerts');
+            const items = res.data.items;
+            const tbody = document.getElementById('tbody-alerts');
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No active network alerts.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(a => `
+                <tr>
+                    <td>
+                        <div style="font-weight:600; color:var(--text-primary);">${a.title}</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary);">${a.message}</div>
+                    </td>
+                    <td><span class="badge badge-low">${a.category}</span></td>
+                    <td><span class="badge badge-${a.severity === 'critical' ? 'critical' : (a.severity === 'high' ? 'high' : 'medium')}">${a.severity}</span></td>
+                    <td><code>${a.source}</code></td>
+                    <td>
+                        <span class="badge badge-${a.is_acknowledged ? 'optimal' : 'medium'}">
+                            ${a.is_acknowledged ? 'ACKNOWLEDGED' : 'ACTIVE'}
+                        </span>
+                    </td>
+                    <td>
+                        ${!a.is_acknowledged ? `
+                            <button class="btn btn-secondary btn-sm btn-ack-alert" data-id="${a.id}">Ack</button>
+                        ` : '<span style="color:var(--text-muted); font-size:0.8rem;">Reviewed</span>'}
+                    </td>
+                </tr>
+            `).join('');
+
+            document.querySelectorAll('.btn-ack-alert').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.target.dataset.id;
+                    try {
+                        await HttpClient.post(`/api/v1/alerts/${id}/acknowledge`);
+                        Toast.success('Alert acknowledged.');
+                        loadAlerts();
+                    } catch (err) {
+                        Toast.error('Action failed.');
+                    }
+                });
+            });
+        } catch (err) {
+            Toast.error('Failed to load alerts.');
+        }
+    }
+    loadAlerts();
+</script>
+{% endblock %}

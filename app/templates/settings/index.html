@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">System Settings & Privacy Controls</h1>
+        <div class="page-subtitle">Working shift schedules, health model weights, and strict zero-payload privacy enforcement</div>
+    </div>
+</div>
+
+<div style="max-width:800px;">
+    <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+            <div class="card-title">Enterprise Operating Hours</div>
+        </div>
+        <form id="form-settings">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+                <div>
+                    <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.35rem; color:var(--text-secondary);">Office Start Time (UTC)</label>
+                    <input type="text" id="cfg-start" class="form-input" value="09:00" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+                </div>
+                <div>
+                    <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.35rem; color:var(--text-secondary);">Office End Time (UTC)</label>
+                    <input type="text" id="cfg-end" class="form-input" value="18:00" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+                </div>
+            </div>
+
+            <div style="margin-bottom:1.5rem;">
+                <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.35rem; color:var(--text-secondary);">Telemetry Retention Period (Days)</label>
+                <input type="number" id="cfg-retention" class="form-input" value="90" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-sm">Save Configuration</button>
+        </form>
+    </div>
+
+    <!-- Privacy Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Zero-Payload Privacy Safeguards</div>
+            <span class="badge badge-optimal">ENFORCED</span>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+            NetWatch AI platform architecture strictly prohibits packet payload logging, email inspection, keystroke recording, or private document capture. Only network layer metadata, DNS query names, IP addresses, and bandwidth bytes are recorded in accordance with enterprise IT monitoring governance.
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    document.getElementById('form-settings').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            await HttpClient.post('/api/v1/settings/config', {
+                office_start_time: document.getElementById('cfg-start').value,
+                office_end_time: document.getElementById('cfg-end').value,
+                retention_days: document.getElementById('cfg-retention').value
+            });
+            Toast.success('Settings saved successfully.');
+        } catch (err) {
+            Toast.error('Failed to save settings.');
+        }
+    });
+</script>
+{% endblock %}

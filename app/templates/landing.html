@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetWatch AI -- Watch Smarter. Detect Faster.</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+    <style>
+        .landing-hero {
+            padding: 6rem 2rem 4rem;
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: var(--radius-full);
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            color: var(--accent-cyan);
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #00f0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-desc {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+        .hero-cta-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.25rem;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            transition: all var(--transition-normal);
+        }
+        .feature-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-glow-cyan);
+        }
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body style="background: radial-gradient(circle at 50% 10%, #162032 0%, #0a0e17 60%);">
+    <header style="display:flex; justify-content:space-between; align-items:center; padding: 1.5rem 3rem; border-bottom: 1px solid var(--border-subtle);">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+            <div class="logo-icon">NW</div>
+            <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">NetWatch <span style="color:var(--accent-cyan);">AI</span></div>
+        </div>
+        <div>
+            <a href="/login" class="btn btn-primary">Launch Console ➔</a>
+        </div>
+    </header>
+
+    <section class="landing-hero">
+        <div class="hero-badge">⚡ Next-Gen Enterprise Network Intelligence</div>
+        <h1 class="hero-title">Watch Smarter.<br>Detect Faster.</h1>
+        <p class="hero-desc">
+            AI-driven network monitoring, 7-stage automated slow network diagnostics, anomaly detection, real-time risk scoring, and grounded copilot intelligence built strictly for authorized enterprise environments.
+        </p>
+        <div class="hero-cta-group">
+            <a href="/login" class="btn btn-primary" style="padding:0.85rem 2rem; font-size:1rem;">Access Live Platform</a>
+            <a href="/dashboard" class="btn btn-secondary" style="padding:0.85rem 2rem; font-size:1rem;">Interactive Demo</a>
+        </div>
+    </section>
+
+    <section class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon">♥</div>
+            <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.5rem;">Network Health Engine</h3>
+            <p style="color:var(--text-secondary); line-height:1.6;">Composite health score (0-100) combining path latency, jitter, packet drop clusters, error rates, and link flaps.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.5rem;">7-Stage Slow Network Wizard</h3>
+            <p style="color:var(--text-secondary); line-height:1.6;">Automated step-by-step diagnostic pipeline pinpointing bottlenecks across gateways, DNS resolvers, and bandwidth saturations.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🛡</div>
+            <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.5rem;">Asset Risk Posture</h3>
+            <p style="color:var(--text-secondary); line-height:1.6;">Dynamic Bayesian-decay risk scoring identifying vulnerable devices, policy infractions, and threat intelligence matches.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.5rem;">Grounded AI Copilot</h3>
+            <p style="color:var(--text-secondary); line-height:1.6;">Natural language query engine grounded in real database telemetry. Answers "Why is the network slow?" with verified evidence.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🕸</div>
+            <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.5rem;">Interactive Topology</h3>
+            <p style="color:var(--text-secondary); line-height:1.6;">Hierarchical force-directed network topology canvas with live link bandwidth overlays and node inspection modals.</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:0.5rem;">Zero Payload Privacy</h3>
+            <p style="color:var(--text-secondary); line-height:1.6;">Strict enterprise privacy boundaries inspecting only metadata, domains, and bandwidth without capturing private messages or keystrokes.</p>
+        </div>
+    </section>
+
+    <footer style="text-align:center; padding:3rem; border-top:1px solid var(--border-subtle); color:var(--text-muted); font-size:0.85rem;">
+        NetWatch AI Enterprise Platform. Authorized Corporate Network Monitoring.
+    </footer>
+</body>
+</html>

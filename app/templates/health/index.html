@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Enterprise Network Health Engine</h1>
+        <div class="page-subtitle">Composite health scoring model across path latency, packet drop, jitter, saturation, and link reliability</div>
+    </div>
+    <div>
+        <a href="/diagnostics/slow-network" class="btn btn-primary btn-sm">⚡ Run Diagnostic Wizard</a>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 2fr; gap:1.5rem; margin-bottom:1.5rem;">
+    <!-- Composite Score Card -->
+    <div class="card" style="text-align:center; padding:2rem;">
+        <div style="font-size:0.85rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:1rem;">Overall Network Health</div>
+        <div id="health-big-score" style="font-size:4.5rem; font-weight:900; color:var(--status-optimal); font-family:var(--font-mono); line-height:1;">
+            --
+        </div>
+        <div id="health-big-status" class="badge badge-optimal" style="margin-top:1rem; font-size:0.85rem; padding:0.4rem 1rem;">
+            OPTIMAL
+        </div>
+        <div id="health-big-explanation" style="font-size:0.85rem; color:var(--text-secondary); margin-top:1.25rem; line-height:1.5;">
+            Loading health model explanation...
+        </div>
+    </div>
+
+    <!-- Health Vectors Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Telemetry Vector Scores (0-100)</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:1.25rem; padding:0.5rem 0;">
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.35rem;">
+                    <span>Round-Trip Path Latency</span>
+                    <span id="score-lat" style="font-weight:700; color:var(--accent-cyan);">--/100</span>
+                </div>
+                <div style="height:8px; background:var(--bg-surface); border-radius:var(--radius-full); overflow:hidden;">
+                    <div id="bar-lat" style="width:0%; height:100%; background:var(--accent-cyan); transition:width 0.5s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.35rem;">
+                    <span>Packet Loss Rate</span>
+                    <span id="score-loss" style="font-weight:700; color:var(--accent-emerald);">--/100</span>
+                </div>
+                <div style="height:8px; background:var(--bg-surface); border-radius:var(--radius-full); overflow:hidden;">
+                    <div id="bar-loss" style="width:0%; height:100%; background:var(--accent-emerald); transition:width 0.5s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.35rem;">
+                    <span>Jitter Stability</span>
+                    <span id="score-jitter" style="font-weight:700; color:var(--accent-blue);">--/100</span>
+                </div>
+                <div style="height:8px; background:var(--bg-surface); border-radius:var(--radius-full); overflow:hidden;">
+                    <div id="bar-jitter" style="width:0%; height:100%; background:var(--accent-blue); transition:width 0.5s ease;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.35rem;">
+                    <span>Bandwidth Saturation</span>
+                    <span id="score-bw" style="font-weight:700; color:var(--accent-purple);">--/100</span>
+                </div>
+                <div style="height:8px; background:var(--bg-surface); border-radius:var(--radius-full); overflow:hidden;">
+                    <div id="bar-bw" style="width:0%; height:100%; background:var(--accent-purple); transition:width 0.5s ease;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    async function loadHealth() {
+        try {
+            const res = await HttpClient.get('/api/v1/health/current');
+            const h = res.data;
+
+            document.getElementById('health-big-score').textContent = h.overall_score;
+            document.getElementById('health-big-score').style.color = h.overall_score >= 80 ? 'var(--status-optimal)' : (h.overall_score >= 60 ? 'var(--status-degraded)' : 'var(--status-critical)');
+            document.getElementById('health-big-status').textContent = h.health_status.toUpperCase();
+            document.getElementById('health-big-explanation').textContent = h.explanation;
+
+            document.getElementById('score-lat').textContent = ${h.latency_score}/100;
+            document.getElementById('bar-lat').style.width = ${h.latency_score}%;
+
+            document.getElementById('score-loss').textContent = ${h.packet_loss_score}/100;
+            document.getElementById('bar-loss').style.width = ${h.packet_loss_score}%;
+
+            document.getElementById('score-jitter').textContent = ${h.jitter_score}/100;
+            document.getElementById('bar-jitter').style.width = ${h.jitter_score}%;
+
+            document.getElementById('score-bw').textContent = ${h.bandwidth_score}/100;
+            document.getElementById('bar-bw').style.width = ${h.bandwidth_score}%;
+        } catch (err) {
+            Toast.error('Failed to load health metrics.');
+        }
+    }
+    loadHealth();
+</script>
+{% endblock %}

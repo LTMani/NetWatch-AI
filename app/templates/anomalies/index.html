@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Anomaly Detection Center</h1>
+        <div class="page-subtitle">Z-Score bandwidth spikes, EWMA off-hours exfiltration, and high-frequency DNS beaconing</div>
+    </div>
+    <div>
+        <button id="btn-trigger-scan" class="btn btn-primary btn-sm">⚡ Run Anomaly Scan</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Anomaly Type</th>
+                    <th>Device / Subnet</th>
+                    <th>Algorithm</th>
+                    <th>Observed vs Baseline</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-anomalies">
+                <tr><td colspan="7" style="text-align:center; padding:2rem;">Loading detected anomalies...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    async function loadAnomalies() {
+        try {
+            const res = await HttpClient.get('/api/v1/anomalies');
+            const items = res.data.items;
+            const tbody = document.getElementById('tbody-anomalies');
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No active anomalies detected across network flows.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(a => `
+                <tr>
+                    <td style="font-weight:600; color:var(--text-primary);">
+                        ${a.anomaly_type.replace(/_/g, ' ').toUpperCase()}
+                    </td>
+                    <td><code>${a.device_id ? 'Device' : 'Subnet'}</code></td>
+                    <td><span class="badge badge-low">${a.algorithm_used}</span></td>
+                    <td>
+                        <div>Observed: <code>${(a.observed_value / (1024*1024)).toFixed(1)} MB</code></div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Baseline: ${(a.baseline_value / (1024*1024)).toFixed(1)} MB</div>
+                    </td>
+                    <td><span class="badge badge-${a.severity === 'critical' ? 'critical' : (a.severity === 'high' ? 'high' : 'medium')}">${a.severity}</span></td>
+                    <td>
+                        <span class="badge badge-${a.is_acknowledged ? 'optimal' : 'medium'}">
+                            ${a.is_acknowledged ? 'ACKNOWLEDGED' : 'ACTIVE'}
+                        </span>
+                    </td>
+                    <td>
+                        ${!a.is_acknowledged ? `
+                            <button class="btn btn-secondary btn-sm btn-ack-anom" data-id="${a.id}">Ack</button>
+                        ` : '<span style="color:var(--text-muted); font-size:0.8rem;">Reviewed</span>'}
+                    </td>
+                </tr>
+            `).join('');
+
+            document.querySelectorAll('.btn-ack-anom').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.target.dataset.id;
+                    try {
+                        await HttpClient.post(`/api/v1/anomalies/${id}/acknowledge`);
+                        Toast.success('Anomaly acknowledged.');
+                        loadAnomalies();
+                    } catch (err) {
+                        Toast.error('Action failed.');
+                    }
+                });
+            });
+        } catch (err) {
+            Toast.error('Failed to load anomalies.');
+        }
+    }
+
+    document.getElementById('btn-trigger-scan').addEventListener('click', async () => {
+        try {
+            const res = await HttpClient.post('/api/v1/anomalies/detect');
+            Toast.success(res.message);
+            loadAnomalies();
+        } catch (err) {
+            Toast.error('Scan failed.');
+        }
+    });
+
+    loadAnomalies();
+</script>
+{% endblock %}

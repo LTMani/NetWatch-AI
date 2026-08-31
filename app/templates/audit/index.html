@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Tamper-Proof Audit Trail & Ledger</h1>
+        <div class="page-subtitle">Cryptographically chained HMAC-SHA256 audit ledger verifying system integrity</div>
+    </div>
+    <div>
+        <button id="btn-verify-audit" class="btn btn-primary btn-sm">🔒 Verify Ledger Integrity</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>User</th>
+                    <th>Resource</th>
+                    <th>Status</th>
+                    <th>Entry HMAC Hash</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-audit">
+                <tr><td colspan="6" style="text-align:center; padding:2rem;">Loading audit logs...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    async function loadAudit() {
+        try {
+            const res = await HttpClient.get('/api/v1/audit-logs');
+            const items = res.data.items;
+            const tbody = document.getElementById('tbody-audit');
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">No audit entries found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(l => `
+                <tr>
+                    <td style="font-weight:600; color:var(--text-primary); font-family:var(--font-mono);">${l.action}</td>
+                    <td>${l.username}</td>
+                    <td><code>${l.resource_type || 'System'}</code></td>
+                    <td><span class="badge badge-${l.status === 'SUCCESS' ? 'optimal' : 'critical'}">${l.status}</span></td>
+                    <td><code style="font-size:0.75rem; color:var(--accent-cyan);">${l.entry_hash ? l.entry_hash.substring(0, 16) + '...' : 'GENESIS'}</code></td>
+                    <td>${l.timestamp ? l.timestamp.substring(0, 19).replace('T', ' ') : 'N/A'}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            Toast.error('Failed to load audit trail.');
+        }
+    }
+
+    document.getElementById('btn-verify-audit').addEventListener('click', async () => {
+        try {
+            const res = await HttpClient.get('/api/v1/audit-logs/verify');
+            if (res.data.is_tamper_free) {
+                Toast.success(`Audit chain verified 100% intact (${res.data.verified_records} records verified).`);
+            } else {
+                Toast.error('Audit chain tamper detected!');
+            }
+        } catch (err) {
+            Toast.error('Verification failed.');
+        }
+    });
+
+    loadAudit();
+</script>
+{% endblock %}

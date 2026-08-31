@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Bandwidth Analytics & Throughput</h1>
+        <div class="page-subtitle">Real-time interface ingress/egress analysis, top talkers, and protocol distribution</div>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:1.25rem; margin-bottom:1.5rem;">
+    <div class="card kpi-card">
+        <div class="kpi-label">Total Ingress Volume</div>
+        <div class="kpi-value" id="kpi-bw-in" style="color:var(--accent-cyan);">-- GB</div>
+        <div class="kpi-subtext">Inbound Traffic</div>
+    </div>
+    <div class="card kpi-card">
+        <div class="kpi-label">Total Egress Volume</div>
+        <div class="kpi-value" id="kpi-bw-out" style="color:var(--accent-blue);">-- GB</div>
+        <div class="kpi-subtext">Outbound Traffic</div>
+    </div>
+    <div class="card kpi-card">
+        <div class="kpi-label">Total Bandwidth Exchanged</div>
+        <div class="kpi-value" id="kpi-bw-total" style="color:var(--accent-emerald);">-- GB</div>
+        <div class="kpi-subtext">Past 24 Hours</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">Top Bandwidth Consuming Endpoints</div>
+    </div>
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Device Name</th>
+                    <th>IP Address</th>
+                    <th>Device Type</th>
+                    <th>Total Transferred</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-top-hogs">
+                <tr><td colspan="4" style="text-align:center; padding:2rem;">Loading top bandwidth consumers...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    async function loadBandwidth() {
+        try {
+            const res = await HttpClient.get('/api/v1/analytics/bandwidth');
+            const d = res.data;
+
+            const gbIn = (d.total_ingress_bytes / (1024 * 1024 * 1024)).toFixed(2);
+            const gbOut = (d.total_egress_bytes / (1024 * 1024 * 1024)).toFixed(2);
+            const gbTot = (d.total_volume_bytes / (1024 * 1024 * 1024)).toFixed(2);
+
+            document.getElementById('kpi-bw-in').textContent = ${gbIn} GB;
+            document.getElementById('kpi-bw-out').textContent = ${gbOut} GB;
+            document.getElementById('kpi-bw-total').textContent = ${gbTot} GB;
+
+            const tbody = document.getElementById('tbody-top-hogs');
+            if (d.top_consumers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--text-muted);">No bandwidth telemetry collected.</td></tr>';
+            } else {
+                tbody.innerHTML = d.top_consumers.map(c => 
+                    <tr>
+                        <td style="font-weight:600; color:var(--text-primary);"></td>
+                        <td><code></code></td>
+                        <td style="text-transform:capitalize;"></td>
+                        <td style="font-weight:700; color:var(--accent-cyan); font-family:var(--font-mono);">
+                             GB
+                        </td>
+                    </tr>
+                ).join('');
+            }
+        } catch (err) {
+            Toast.error('Failed to load bandwidth analytics.');
+        }
+    }
+    loadBandwidth();
+</script>
+{% endblock %}

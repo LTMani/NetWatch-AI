@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Device 360: {{ device.name if device else 'Endpoint' }}</h1>
+        <div class="page-subtitle">IP: <code>{{ device.ip_address if device else 'N/A' }}</code> | MAC: <code>{{ device.mac_address if device else 'N/A' }}</code></div>
+    </div>
+    <div>
+        <a href="/devices" class="btn btn-secondary btn-sm">⬅ Back to Inventory</a>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 2fr; gap:1.5rem;">
+    <!-- Asset Metadata Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Asset Specification</div>
+            <span class="badge badge-{{ 'critical' if device and device.risk_score >= 50 else 'optimal' }}">
+                Risk Score: {{ device.risk_score if device else 0 }}
+            </span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.85rem; font-size:0.85rem;">
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-subtle); padding-bottom:0.5rem;">
+                <span style="color:var(--text-muted);">Hardware Vendor</span>
+                <span>{{ device.vendor if device else 'Enterprise Hardware' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-subtle); padding-bottom:0.5rem;">
+                <span style="color:var(--text-muted);">Device Type</span>
+                <span style="text-transform:capitalize;">{{ device.device_type if device else 'Workstation' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-subtle); padding-bottom:0.5rem;">
+                <span style="color:var(--text-muted);">Operating System</span>
+                <span>{{ device.operating_system if device else 'Linux' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-subtle); padding-bottom:0.5rem;">
+                <span style="color:var(--text-muted);">Assigned User</span>
+                <span>{{ device.assigned_user or 'Unassigned' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-muted);">Authorization</span>
+                <span class="badge badge-{{ 'optimal' if device and device.is_authorized else 'critical' }}">
+                    {{ 'Authorized' if device and device.is_authorized else 'Unauthorized' }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Telemetry Stream -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Real-Time Bandwidth Utilization</div>
+            <span class="badge badge-low">Live NetFlow Stream</span>
+        </div>
+        <div style="height:220px;">
+            <canvas id="canvas-device-telemetry"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { ChartRenderer } from '/static/js/components/charts.js';
+    const sampleData = [12, 18, 25, 42, 68, 55, 32, 28, 45, 52, 60, 48];
+    const labels = ['-55m', '-50m', '-45m', '-40m', '-35m', '-30m', '-25m', '-20m', '-15m', '-10m', '-5m', 'Now'];
+    ChartRenderer.renderLineChart('canvas-device-telemetry', labels, sampleData, '#38bdf8');
+</script>
+{% endblock %}

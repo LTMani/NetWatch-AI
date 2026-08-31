@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">War Room: {{ incident.incident_number if incident else 'INC-2026-0001' }}</h1>
+        <div class="page-subtitle">{{ incident.title if incident else 'Core Performance Incident' }}</div>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+        <select id="select-inc-status" class="form-input" style="padding:0.4rem 0.75rem; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+            <option value="open" {% if incident and incident.status == 'open' %}selected{% endif %}>Open</option>
+            <option value="investigating" {% if incident and incident.status == 'investigating' %}selected{% endif %}>Investigating</option>
+            <option value="identified" {% if incident and incident.status == 'identified' %}selected{% endif %}>Identified</option>
+            <option value="monitoring" {% if incident and incident.status == 'monitoring' %}selected{% endif %}>Monitoring</option>
+            <option value="resolved" {% if incident and incident.status == 'resolved' %}selected{% endif %}>Resolved</option>
+        </select>
+        <button id="btn-save-status" class="btn btn-primary btn-sm">Update State</button>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem;">
+    <!-- Investigation Timeline -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Investigation Activity Timeline</div>
+        </div>
+        <div id="timeline-container" style="display:flex; flex-direction:column; gap:1rem; padding:0.5rem 0;">
+            {% if incident and incident.timeline_entries %}
+                {% for entry in incident.timeline_entries %}
+                    <div style="border-left:2px solid var(--accent-cyan); padding-left:1rem;">
+                        <div style="font-size:0.75rem; color:var(--text-muted);">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M UTC') }} by <b>{{ entry.author }}</b></div>
+                        <div style="font-size:0.85rem; color:var(--text-primary); margin-top:0.25rem;">{{ entry.message }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div style="color:var(--text-muted); text-align:center; padding:2rem;">No timeline entries recorded yet.</div>
+            {% endif %}
+        </div>
+
+        <form id="form-add-timeline" style="margin-top:1.5rem; display:flex; gap:0.5rem;">
+            <input type="text" id="input-timeline-note" class="form-input" placeholder="Add investigation note or finding..." required style="flex:1; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+            <button type="submit" class="btn btn-secondary btn-sm">+ Post Note</button>
+        </form>
+    </div>
+
+    <!-- Metadata Panel -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Incident Meta</div>
+            <span class="badge badge-high">{{ incident.severity if incident else 'SEV-2' }}</span>
+        </div>
+        <div style="font-size:0.85rem; display:flex; flex-direction:column; gap:0.75rem;">
+            <div>
+                <span style="color:var(--text-muted);">Summary:</span>
+                <p style="color:var(--text-primary); margin-top:0.25rem;">{{ incident.summary if incident else 'No summary' }}</p>
+            </div>
+            <div>
+                <span style="color:var(--text-muted);">Lead Investigator:</span>
+                <p style="color:var(--text-primary);">{{ incident.lead_investigator if incident else 'admin' }}</p>
+            </div>
+            <div>
+                <span style="color:var(--text-muted);">Category:</span>
+                <p style="color:var(--text-primary);">{{ incident.category if incident else 'Network Performance' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    const incId = '{{ incident.id if incident else "" }}';
+
+    document.getElementById('btn-save-status').addEventListener('click', async () => {
+        const newStatus = document.getElementById('select-inc-status').value;
+        try {
+            await HttpClient.patch(`/api/v1/incidents/${incId}/status`, { status: newStatus });
+            Toast.success('Incident status updated.');
+            setTimeout(() => window.location.reload(), 400);
+        } catch (err) {
+            Toast.error('Failed to update status.');
+        }
+    });
+
+    document.getElementById('form-add-timeline').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const note = document.getElementById('input-timeline-note').value.trim();
+        try {
+            await HttpClient.post(`/api/v1/incidents/${incId}/timeline`, { message: note, entry_type: 'NOTE' });
+            Toast.success('Timeline note added.');
+            setTimeout(() => window.location.reload(), 400);
+        } catch (err) {
+            Toast.error('Failed to post note.');
+        }
+    });
+</script>
+{% endblock %}

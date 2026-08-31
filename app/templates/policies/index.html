@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Traffic Policies & Rule Builder</h1>
+        <div class="page-subtitle">Define automated threshold triggers, domain category restrictions, and violation actions</div>
+    </div>
+    <div>
+        <button id="btn-create-policy" class="btn btn-primary btn-sm">+ Create Policy</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Policy Name</th>
+                    <th>Category</th>
+                    <th>Action</th>
+                    <th>Severity</th>
+                    <th>Violations</th>
+                    <th>State</th>
+                    <th>Toggle</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-policies">
+                <tr><td colspan="7" style="text-align:center; padding:2rem;">Loading policies...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Policy Modal -->
+<div id="modal-create-pol" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 style="font-size:1.1rem; font-weight:700;">Define Traffic Policy</h3>
+            <button data-modal-close="modal-create-pol" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button>
+        </div>
+        <form id="form-create-pol">
+            <div class="modal-body">
+                <div style="margin-bottom:1rem;">
+                    <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.3rem;">Policy Name</label>
+                    <input type="text" id="pol-name" class="form-input" required placeholder="Restrict Heavy P2P & Streaming During Office Hours" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.3rem;">Category</label>
+                        <select id="pol-cat" class="form-input" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+                            <option value="BANDWIDTH">Bandwidth Threshold</option>
+                            <option value="DOMAIN">Domain Category</option>
+                            <option value="SECURITY">Security Posture</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="display:block; font-size:0.8rem; margin-bottom:0.3rem;">Action</label>
+                        <select id="pol-act" class="form-input" style="width:100%; padding:0.55rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-md); color:#fff;">
+                            <option value="create_incident">Create Incident & Alert</option>
+                            <option value="alert_only">Alert Only</option>
+                            <option value="quarantine_device">Auto-Quarantine Device</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-modal-close="modal-create-pol" class="btn btn-secondary btn-sm">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save Policy</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import { HttpClient } from '/static/js/core/http.js';
+    import { Modal } from '/static/js/components/modal.js';
+    import { Toast } from '/static/js/components/toast.js';
+
+    async function loadPolicies() {
+        try {
+            const res = await HttpClient.get('/api/v1/policies');
+            const items = res.data;
+            const tbody = document.getElementById('tbody-policies');
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No policies configured.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(p => `
+                <tr>
+                    <td>
+                        <div style="font-weight:600; color:var(--text-primary);">${p.name}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${p.description || 'Enterprise rule'}</div>
+                    </td>
+                    <td><span class="badge badge-low">${p.category}</span></td>
+                    <td><code>${p.action}</code></td>
+                    <td><span class="badge badge-${p.severity === 'critical' ? 'critical' : 'high'}">${p.severity.toUpperCase()}</span></td>
+                    <td style="font-weight:700; color:${p.violation_count > 0 ? 'var(--status-critical)' : 'var(--text-muted)'};">${p.violation_count}</td>
+                    <td>
+                        <span class="badge badge-${p.is_enabled ? 'optimal' : 'medium'}">
+                            ${p.is_enabled ? 'ACTIVE' : 'DISABLED'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm btn-toggle-pol" data-id="${p.id}">
+                            ${p.is_enabled ? 'Disable' : 'Enable'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.querySelectorAll('.btn-toggle-pol').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.target.dataset.id;
+                    try {
+                        await HttpClient.patch(`/api/v1/policies/${id}/toggle`);
+                        Toast.success('Policy state updated.');
+                        loadPolicies();
+                    } catch (err) {
+                        Toast.error('Action failed.');
+                    }
+                });
+            });
+        } catch (err) {
+            Toast.error('Failed to load policies.');
+        }
+    }
+
+    document.getElementById('btn-create-policy').addEventListener('click', () => Modal.open('modal-create-pol'));
+
+    document.getElementById('form-create-pol').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            name: document.getElementById('pol-name').value.trim(),
+            category: document.getElementById('pol-cat').value,
+            action: document.getElementById('pol-act').value
+        };
+        try {
+            await HttpClient.post('/api/v1/policies', payload);
+            Toast.success('Policy created.');
+            Modal.close('modal-create-pol');
+            loadPolicies();
+        } catch (err) {
+            Toast.error(err.message || 'Creation failed.');
+        }
+    });
+
+    loadPolicies();
+</script>
+{% endblock %}
