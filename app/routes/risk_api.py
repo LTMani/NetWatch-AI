@@ -8,6 +8,7 @@ risk_repo = RiskRepository()
 risk_engine = AssetRiskScoringEngine()
 
 @risk_api_bp.route('/leaderboard', methods=['GET'])
+@risk_api_bp.route('/summary', methods=['GET'])
 @login_required
 def get_risk_leaderboard():
     limit = int(request.args.get('limit', 10))

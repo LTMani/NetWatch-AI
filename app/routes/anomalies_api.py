@@ -9,6 +9,7 @@ anom_repo = AnomalyRepository()
 anom_engine = AnomalyDetectionEngine()
 
 @anomalies_api_bp.route('', methods=['GET'])
+@anomalies_api_bp.route('/events', methods=['GET'])
 @login_required
 def list_anomalies():
     dev_id = request.args.get('device_id')

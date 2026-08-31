@@ -8,6 +8,7 @@ health_engine = NetworkHealthEngine()
 health_repo = HealthRepository()
 
 @health_api_bp.route('/current', methods=['GET'])
+@health_api_bp.route('/summary', methods=['GET'])
 @login_required
 def get_current_health():
     snapshot = health_engine.calculate_health()
