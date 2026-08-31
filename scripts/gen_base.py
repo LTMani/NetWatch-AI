@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+﻿import sys
+sys.path.insert(0, '.')
+from scripts.writer import write
+
+base_html = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -194,3 +198,6 @@
     {% block scripts %}{% endblock %}
 </body>
 </html>
+"""
+write('app/templates/base.html', base_html)
+print('[+] base.html written!')

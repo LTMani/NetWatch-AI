@@ -1,4 +1,6 @@
-{% extends "base.html" %}
+﻿import os
+
+p1 = """{% extends "base.html" %}
 
 {% block content %}
 <div class="greeting-header">
@@ -102,7 +104,8 @@
         </div>
     </div>
 </div>
-
+"""
+p2 = """
 <!-- Row 2: 4 Key Widgets -->
 <div class="dash-row-2">
     <!-- 1. Network Traffic Overview -->
@@ -292,7 +295,8 @@
         </div>
     </div>
 </div>
-
+"""
+p3 = """
 <!-- Row 3: 4 Widgets -->
 <div class="dash-row-3">
     <!-- 1. Device Health Summary -->
@@ -730,3 +734,9 @@
     };
 </script>
 {% endblock %}
+"""
+
+with open('app/templates/dashboard/index.html', 'w', encoding='utf-8') as f:
+    f.write(p1 + p2 + p3)
+
+print('[+] Complete redesigned dashboard/index.html written!')
